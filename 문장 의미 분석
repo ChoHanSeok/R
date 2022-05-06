@@ -1,0 +1,55 @@
+ 
+setwd("C:/Users/PC356/Documents/R")
+library(tm)
+library(KoNLP)
+library(rvest)
+library(wordcloud)
+useSejongDic()
+useNIADic()
+options(mc.cores =1) #멀티코어 사용시 오류가 발생할 가능성이 높아 사용하지 않음.
+text <- readLines("우도맛집추천.txt",encoding="EUC-KR") 
+text
+text = repair_encoding(text)
+#1.텍스트 읽어오기
+doc <- Corpus(VectorSource(text)) 
+doc
+words <- function(doc){
+  doc <- as.character(doc)
+  extractNoun(doc)
+  str_replace_all(doc,"[^[:graph:]]", " ") 
+}
+words
+#2.말뭉치변환
+tdm <- TermDocumentMatrix(doc,  #3.TermDocumentMatrix변환
+                          control=list( #아래로 옵셥을 나열
+                            tokenize=words, #미리 만들어둔 함수
+                            removeNumbers=T,   #숫자제거
+                            removePunctuation=T,  #문장부호제거
+                            wordLengths=c(1, 10)  #1~10음절로 이루어진 단어만 추출
+                            
+                          ))
+tdm
+Encoding(tdm$dimnames$Terms) = 'euc-kr' # tdm에서 한글 코드 깨질때 
+tdm2 <- as.matrix(tdm) 
+tdm2
+tdm3 = rowSums(tdm2)
+tdm3
+tdm4 = tdm3[order(tdm3, decreasing = T)]
+tdm4
+class(tdm4)
+as.data.frame(tdm4)
+as.data.frame(tdm4[1:20])
+wordTdm= as.data.frame(tdm4)
+wordTdm
+set.seed(1234)
+display.brewer.all()
+wordcloud(words = rownames(wordTdm), freq = wordTdm$tdm4, min.freq = 1,
+          random.order=FALSE, rot.per=0.35,max.words = 100,colors=brewer.pal(10, "RdBu"))
+class(wordTdm)
+install.packages("wordcloud2")
+library(wordcloud2)
+words = list(word = rownames(wordTdm),freq = wordTdm$tdm4)
+wcount = as.data.frame(words)
+wordcloud2(wcount, color = "random-dark", fontFamily = '나눔고딕')
+demoFreq
+
